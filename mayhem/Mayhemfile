@@ -1,0 +1,6 @@
+project: qcompress
+target: qcompress-fuzz
+
+cmds:
+    - cmd: ./qcompress-fuzz
+      libfuzzer: true
