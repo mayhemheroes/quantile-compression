@@ -1,6 +1,7 @@
 #![no_main]
 
 extern crate libfuzzer_sys;
+extern crate q_compress;
 
 use libfuzzer_sys::fuzz_target;
 use q_compress::{auto_compress,auto_decompress,DEFAULT_COMPRESSION_LEVEL};
