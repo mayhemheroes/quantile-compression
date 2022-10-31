@@ -5,7 +5,6 @@ extern crate q_compress;
 
 use libfuzzer_sys::fuzz_target;
 use q_compress::Compressor;
-j
 
 fuzz_target!(|data: &[u8]| {
       let ivec = Vec::from(data);
