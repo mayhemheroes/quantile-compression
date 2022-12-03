@@ -21,14 +21,19 @@ pub const BYTES_PER_WORD: usize = WORD_SIZE / 8;
 
 pub const DEFAULT_COMPRESSION_LEVEL: usize = 8;
 pub const MAX_COMPRESSION_LEVEL: usize = 12;
+pub const MIN_N_TO_USE_RUN_LEN: usize = 1001;
+pub const MIN_FREQUENCY_TO_USE_RUN_LEN: f64 = 0.8;
+
+pub const AUTO_DELTA_LIMIT: usize = 1100;
+pub const MAX_AUTO_DELTA_COMPRESSION_LEVEL: usize = 6;
 
 #[cfg(test)]
 mod tests {
+  use crate::bits::bits_to_encode;
   use crate::constants::*;
 
   fn assert_can_encode(n_bits: usize, max_number: usize) {
-    let min_required_bits = ((max_number + 1) as f64).log2().ceil() as usize;
-    assert!(n_bits >= min_required_bits)
+    assert!(n_bits >= bits_to_encode(max_number));
   }
 
   #[test]
@@ -55,5 +60,10 @@ mod tests {
   fn test_prefix_table_size_fits_in_word() {
     assert!(MAX_PREFIX_TABLE_SIZE_LOG > 0);
     assert!(MAX_PREFIX_TABLE_SIZE_LOG <= WORD_SIZE);
+  }
+
+  #[test]
+  fn test_auto_detects_sparsity() {
+    assert!(AUTO_DELTA_LIMIT > MIN_N_TO_USE_RUN_LEN + MAX_DELTA_ENCODING_ORDER);
   }
 }

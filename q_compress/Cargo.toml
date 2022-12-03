@@ -1,6 +1,6 @@
 [package]
 name = "q_compress"
-version = "0.11.1"
+version = "0.11.5"
 edition = "2018"
 
 authors = ["mwlon <m.w.loncaric@gmail.com>"]
@@ -26,6 +26,10 @@ zstd = "0.10"
 [[example]]
 name="primary"
 path="examples/primary.rs"
+
+[[example]]
+name="wrapped_time_series"
+path="examples/wrapped_time_series.rs"
 
 [[example]]
 name="fast_seeking"

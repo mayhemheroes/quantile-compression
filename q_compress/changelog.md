@@ -1,5 +1,32 @@
 # `q_compress` Changelog
 
+## 0.11.5 (not yet released)
+* Increased compression speed 4% in most cases by making `BitWriter` implementation cleverer.
+
+## 0.11.4
+
+* Increased decompression speed another 8-20% for interesting distributions by
+making `BitReader` implementation cleverer.
+* Fixed an atomicity bug during streaming decompression that could lead to
+panics or incorrect results.
+
+## 0.11.3
+
+* Improved decompression speed 8-18% for non-sparse distributions by compiling
+sparse vs non-sparse loops separately.
+
+## 0.11.2
+
+* Added support for "wrapped mode" - a way to write/read quantile-compressed
+data with finer granularity (data page instead of chunk) and less bloat for
+interleaving within another wrapping columnar data format that manages its own
+count and compressed body size statistics. Usable via
+`::wrapped::{Compressor, Decompressor}`. This includes a new flag for whether
+wrapped mode was used.
+* Fixed some atomicity bugs when returning errors.
+* Improved auto delta encoding order heuristic for nearly-constant data.
+* Improved compression speed ~8% by streamlining unoptimized prefix algorithm.
+
 ## 0.11.1
 
 * Improved prefix optimization speed (part of compression) by 30%.

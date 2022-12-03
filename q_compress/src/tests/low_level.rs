@@ -1,7 +1,7 @@
 use std::io::Write;
 use crate::{Compressor, CompressorConfig, DecompressedItem, Decompressor};
 use crate::data_types::NumberLike;
-use crate::decompressor::DecompressorConfig;
+use crate::base_decompressor::DecompressorConfig;
 use crate::errors::ErrorKind;
 
 #[test]
@@ -30,7 +30,7 @@ fn test_low_level_sparse() {
 
 fn assert_lowest_level_behavior<T: NumberLike>(numss: Vec<Vec<T>>) {
   for delta_encoding_order in [0, 7] {
-    println!("deo={}", delta_encoding_order);
+    let debug_info = format!("delta order={}", delta_encoding_order);
     let mut compressor = Compressor::<T>::from_config(
       CompressorConfig::default().with_delta_encoding_order(delta_encoding_order)
     );
@@ -48,7 +48,7 @@ fn assert_lowest_level_behavior<T: NumberLike>(numss: Vec<Vec<T>>) {
     );
     decompressor.write_all(&bytes).unwrap();
     let flags = decompressor.header().unwrap();
-    assert_eq!(&flags, compressor.flags());
+    assert_eq!(&flags, compressor.flags(), "{}", debug_info);
     let mut chunk_idx = 0;
     let mut chunk_nums = Vec::<T>::new();
     let mut terminated = false;
@@ -75,10 +75,10 @@ fn assert_lowest_level_behavior<T: NumberLike>(numss: Vec<Vec<T>>) {
         }
       }
     }
-    assert_eq!(&chunk_nums, numss.last().unwrap());
+    assert_eq!(&chunk_nums, numss.last().unwrap(), "{}", debug_info);
 
     let terminated_err = decompressor.chunk_metadata().unwrap_err();
-    assert!(matches!(terminated_err.kind, ErrorKind::InvalidArgument));
-    assert!(terminated);
+    assert!(matches!(terminated_err.kind, ErrorKind::InvalidArgument), "{}", debug_info);
+    assert!(terminated, "{}", debug_info);
   }
 }

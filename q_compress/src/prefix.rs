@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter};
-use std::marker::PhantomData;
+
 use crate::bits;
 use crate::data_types::{NumberLike, UnsignedLike};
 
@@ -15,8 +15,10 @@ use crate::data_types::{NumberLike, UnsignedLike};
 /// consecutive repetitions of that number if `run_length_jumpstart` is
 /// available, and then the exact offset within the range for the number.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Prefix<T> where T: NumberLike {
   /// The count of numbers in the chunk that fall into this Prefix's range.
+  /// Not available in wrapped mode.
   pub count: usize,
   /// The Huffman code for this prefix. Collectively, all the prefixes for a
   /// chunk form a binary search tree (BST) over these Huffman codes.
@@ -36,8 +38,6 @@ pub struct Prefix<T> where T: NumberLike {
   /// The greatest common divisor of all numbers belonging to this prefix
   /// (in the data type's corresponding unsigned integer).
   pub gcd: T::Unsigned,
-  // Make it API-stable to add more fields in the future
-  pub(crate) phantom: PhantomData<()>,
 }
 
 impl<T: NumberLike> Display for Prefix<T> {
@@ -124,7 +124,6 @@ impl<T: NumberLike> WeightedPrefix<T> {
       code: Vec::new(),
       run_len_jumpstart,
       gcd,
-      phantom: PhantomData,
     };
     WeightedPrefix {
       prefix,
@@ -193,7 +192,7 @@ impl<U: UnsignedLike> Default for PrefixCompressionInfo<U> {
 #[derive(Clone, Copy, Debug)]
 pub struct PrefixDecompressionInfo<U> where U: UnsignedLike {
   pub lower_unsigned: U,
-  pub k_range: U,
+  pub min_unambiguous_k_bit_offset: U,
   pub k: usize,
   pub depth: usize,
   pub run_len_jumpstart: Option<usize>,
@@ -205,7 +204,7 @@ impl<U: UnsignedLike> Default for PrefixDecompressionInfo<U> {
   fn default() -> Self {
     PrefixDecompressionInfo {
       lower_unsigned: U::ZERO,
-      k_range: U::MAX,
+      min_unambiguous_k_bit_offset: U::MAX,
       k: U::BITS,
       depth: 0,
       run_len_jumpstart: None,
@@ -219,15 +218,20 @@ impl<T> From<&Prefix<T>> for PrefixDecompressionInfo<T::Unsigned> where T: Numbe
   fn from(p: &Prefix<T>) -> Self {
     let lower_unsigned = p.lower.to_unsigned();
     let upper_unsigned = p.upper.to_unsigned();
-    let KInfo { k, only_k_bits_lower: _, only_k_bits_upper: _ } = p.k_info();
-    let most_significant = if k == T::PHYSICAL_BITS {
-      T::Unsigned::ZERO
+    let KInfo { k, .. } = p.k_info();
+    let (most_significant, min_unambiguous_k_bit_offset) = if k == T::PHYSICAL_BITS {
+      (T::Unsigned::ZERO, T::Unsigned::ZERO)
     } else {
-      T::Unsigned::ONE << k
+      let most_significant = T::Unsigned::ONE << k;
+      let gcd_diff = (upper_unsigned - lower_unsigned) / p.gcd;
+      (
+        most_significant,
+        (gcd_diff + T::Unsigned::ONE) - most_significant
+      )
     };
     PrefixDecompressionInfo {
       lower_unsigned,
-      k_range: (upper_unsigned - lower_unsigned) / p.gcd,
+      min_unambiguous_k_bit_offset,
       k,
       run_len_jumpstart: p.run_len_jumpstart,
       depth: p.code.len(),

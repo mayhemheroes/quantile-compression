@@ -87,7 +87,7 @@ pub fn bits_to_string(bits: &[bool]) -> String {
     .join("");
 }
 
-#[inline(always)]
+#[inline]
 fn bumpy_log(x: f64) -> f64 {
   let k = x.log2() as usize;
   let (base, exp) = BUMPY_LOG_TABLE[k];
@@ -116,6 +116,10 @@ pub fn words_to_bytes(words: &[usize]) -> Vec<u8> {
   words.iter()
     .flat_map(|w| w.to_be_bytes())
     .collect::<Vec<_>>()
+}
+
+pub fn bits_to_encode(max_number: usize) -> usize {
+  ((max_number + 1) as f64).log2().ceil() as usize
 }
 
 #[cfg(test)]
