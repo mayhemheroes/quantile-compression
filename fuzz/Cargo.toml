@@ -1,0 +1,26 @@
+[package]
+name = "qcompress-fuzz"
+version = "0.0.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.q_compress]
+path = "../q_compress"
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "qcompress-fuzz"
+path = "fuzz_targets/qcompress-fuzz.rs"
+test = false
+doc = false
